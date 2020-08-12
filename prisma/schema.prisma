@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Cart {
+  cartID        Int        @default(autoincrement()) @id
+  startPeriodID Int
+  endPeriodID   Int
+  personID      Int?       @map("idOsoby")
+  name          String
+  email         String
+  adsMotive     String
+  goal          String?
+  info          String?
+  PeriodEnd     Period     @relation("Cart_endPeriodIDToPeriod", fields: [endPeriodID], references: [periodID])
+  assignedTo    Person?    @relation(fields: [personID], references: [personID])
+  PeriodStart   Period     @relation("Cart_startPeriodIDToPeriod", fields: [startPeriodID], references: [periodID])
+  CartItem      CartItem[]
+
+  @@index([personID], name: "cartAssignement_idx")
+  @@index([endPeriodID], name: "cartPeriodEnd_idx")
+  @@index([startPeriodID], name: "cartPeriodStart_idx")
+}
+
+model CartItem {
+  cartID    Int
+  carrierID Int     @map("NCis")
+  carrier   Carrier @relation(fields: [carrierID], references: [carrierID])
+  Cart      Cart    @relation(fields: [cartID], references: [cartID])
+
+  @@id([cartID, carrierID])
+  @@index([carrierID], name: "cartCarrier_idx")
+}
+
+model CarrierPhoto {
+  carrierID Int     @map("nCis")
+  order     Int     @default(autoincrement()) @map("verze")
+  src       String  @map("fName")
+  carrier   Carrier @relation(fields: [carrierID], references: [carrierID])
+
+  @@id([order, carrierID])
+  @@index([carrierID], name: "nCis")
+  @@map("fotorl")
+}
+
+model Carrier {
+  carrierID       Int             @id @map("NCis")
+  origin          String?         @map("Zdroj")
+  idDod           Int?
+  type            String          @map("Typ")
+  city            String?         @map("Mesto")
+  street          String?         @map("Ulice")
+  description     String?         @map("Popis")
+  dimensions      String?         @map("Velikost")
+  idKraj          Int             @default(0)
+  ownerID         String?         @map("VCis")
+  anguleToRoad    Int?            @map("Poloha")
+  Osvetleni       Int?
+  Videt           Int?
+  NPozn           String?
+  lng             Float?
+  lat             Float?
+  orientation     Int?            @default(dbgenerated()) @map("Azimut")
+  GPSOverriten    Int?            @default(0) @map("GpsNase")
+  textOverriten   Int?            @default(0) @map("TextNase")
+  traffic         Int?            @map("Prujezd")
+  size            Float?          @map("Plocha")
+  sizeCoef        Int?            @map("kVel")
+  placeCoef       Int?            @map("kPol")
+  lightCoef       Int?            @map("kOsv")
+  visibilityCoef  Int?            @map("kVid")
+  exclusivityCoef Int?            @map("kExkl")
+  surroundingCoef Int?            @map("kOkolo")
+  photos          CarrierPhoto[]
+
+  @@index([idDod], name: "nosic_dodavatel_idx")
+  @@index([idKraj], name: "nosic_kraj_idx")
+  @@map("nosice")
+}
+
+model Period {
+  periodID        Int          @default(autoincrement()) @id @map("idObdobi")
+  from            DateTime     @map("od")
+  till            DateTime     @map("do")
+  type            String       @default("o") @map("otyp")
+  text            String       @map("Obdobi")
+  monthsNo        Int          @map("delka")
+  RM              Int?
+  CartEndPeriod   Cart[]       @relation("Cart_endPeriodIDToPeriod")
+  CartStartPeriod Cart[]       @relation("Cart_startPeriodIDToPeriod")
+
+  @@map("obdobi")
+  @@unique([from, till, type], name: "Datumy")
+  @@unique([type, text], name: "typ_obdobi")
+}
+
+model Person {
+  personID   Int          @default(autoincrement()) @id @map("idOsoby")
+  alias      String       @map("Alias") @unique
+  name       String?      @map("Jmeno")
+  rights     Int?         @default(3) @map("Prava")
+  email      String?      @map("Email")
+  phoneNo    String?      @map("Tel")
+  pass       String?      @map("Heslo")
+  canSign    Int?         @map("Jednatel")
+  // This type is currently not supported.
+  // Podpis  binary?
+  Cart       Cart[]
+
+  @@map("osoby")
+}

@@ -1,0 +1,8 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../dist/out-tsc",
+		"types": ["node", "express"],
+	},
+	"files": ["src/nexus-prisma/schema.ts", "src/nexus-prisma/nexus.generated.ts"],
+}
